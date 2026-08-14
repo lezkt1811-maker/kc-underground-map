@@ -1,0 +1,129 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "note": "Locations are best-effort approximations built from public sources (Wikipedia, Hunt Midwest, Missouri DGLS geologic field-trip guides, KCUR, KSHB). Polygon outlines are ILLUSTRATIVE extents, not surveyed mine boundaries, unless 'confidence' is 'verified'. See README.md for how to replace these with authoritative GIS data.",
+    "sources": [
+      "https://en.wikipedia.org/wiki/SubTropolis",
+      "https://huntmidwest.com/expertise/subtropolis/",
+      "https://share.mo.gov/nr/mgs (Missouri Geological Survey field trip guides)",
+      "https://hub.kansasgis.org/datasets/KU::quarries-and-mines (Kansas Geoportal)",
+      "https://www.kcur.org/arts-life/2022-07-02/kansas-city-underground-how-to-explore-the-hidden-locations-beneath-our-streets"
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SubTropolis",
+        "operator": "Hunt Midwest",
+        "formation": "Bethany Falls Limestone",
+        "depth_ft": 160,
+        "size_sqft": 55000000,
+        "status": "active business complex",
+        "confidence": "verified-point / illustrative-extent",
+        "notes": "World's largest underground business complex. Room-and-pillar mine, 25-ft pillars, ~65-70F year round. USPS and EPA Region 7 lease space here. North of the Missouri River, Clay County side.",
+        "source": "https://en.wikipedia.org/wiki/SubTropolis"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.4990, 39.1720],
+          [-94.4560, 39.1720],
+          [-94.4560, 39.1500],
+          [-94.4990, 39.1500],
+          [-94.4990, 39.1720]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parkville Commercial Underground",
+        "operator": "Multiple tenants / Park University area",
+        "formation": "Bethany Falls Limestone",
+        "depth_ft": null,
+        "size_sqft": 1000000,
+        "status": "active (offices, distillery, university space)",
+        "confidence": "approximate",
+        "notes": "Former limestone mine beneath a bluff near Park University; houses a whiskey distillery and other tenants. Exact underground footprint not public.",
+        "source": "https://www.kcur.org/arts-life/2022-07-02/kansas-city-underground-how-to-explore-the-hidden-locations-beneath-our-streets"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-94.6811, 39.1961]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Brunson Instrument / 87th & Blue River area mine",
+        "operator": "Historic - Brunson Instrument Co.",
+        "formation": "Bethany Falls Limestone",
+        "depth_ft": null,
+        "size_sqft": null,
+        "status": "historic underground installation",
+        "confidence": "approximate",
+        "notes": "One of the first underground sites in the area developed specifically to use mined-out space (moved underground 1961 for vibration-free precision instrument calibration).",
+        "source": "Missouri DGLS geologic field trip guide, 'Geology of Kansas City'"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-94.5480, 38.9430]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "J. Rieger & Co. tunnel (West Bottoms)",
+        "operator": "Historic - Heim Brewery / J. Rieger & Co.",
+        "formation": "Unspecified limestone/fill",
+        "depth_ft": null,
+        "size_sqft": null,
+        "status": "historic tunnel, partially explored",
+        "confidence": "approximate",
+        "notes": "400-ft tunnel discovered beneath the distillery during renovation, believed linked to the historic Heim Brewery.",
+        "source": "https://www.kcur.org/arts-life/2022-07-02/kansas-city-underground-how-to-explore-the-hidden-locations-beneath-our-streets"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-94.6001, 39.0912]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Independence, MO historic quarries (Shaw / McDonald)",
+        "operator": "Historic, 19th century",
+        "formation": "Bethany Falls / local limestone",
+        "depth_ft": null,
+        "size_sqft": null,
+        "status": "historic surface/underground quarry, exact site lost to records",
+        "confidence": "historical-approximate",
+        "notes": "Documented in 1897 Mine, Quarry and Metallurgical Record and Missouri Bureau of Geology and Mines reports. Placed near central Independence pending better georeferencing - do not treat this pin as precise.",
+        "source": "https://quarriesandbeyond.org/states/mo/mo-quarry_photos_11.html"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-94.4155, 39.0911]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Community of Christ Temple / Temple Lot area",
+        "operator": "N/A - reference landmark",
+        "formation": "N/A",
+        "depth_ft": null,
+        "size_sqft": null,
+        "status": "surface landmark, NOT a mine",
+        "confidence": "verified-point (surface landmark only)",
+        "notes": "Reference pin only, added because it's a common orientation point in Independence. No public mine map confirms a void directly beneath this specific footprint. It sits in the same regional limestone belt as other Jackson County mines but on the OPPOSITE side of the Missouri River from SubTropolis - they are not the same mine system.",
+        "source": "user-provided reference point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-94.4300, 39.0900]
+      }
+    }
+  ]
+}

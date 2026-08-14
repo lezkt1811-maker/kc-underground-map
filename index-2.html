@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KC Underground — Limestone Mine Overlay</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rock-950:#121110;
+    --rock-900:#1a1712;
+    --rock-800:#242019;
+    --rock-700:#332c22;
+    --limestone:#cdbf9d;
+    --limestone-dim:#8f8770;
+    --amber:#f0a83c;
+    --amber-dim:#8a6425;
+    --teal:#3a7d8c;
+    --danger:#c1552f;
+    --text:#e9e3d6;
+    --text-dim:#a89f8c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--rock-950);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;}
+  #map{position:absolute;inset:0;background:#0c0b0a;}
+
+  /* Leaflet dark tweaks */
+  .leaflet-container{background:#0c0b0a;font-family:'Inter',sans-serif;}
+  .leaflet-control-zoom a{background:var(--rock-800)!important;color:var(--limestone)!important;border-color:var(--rock-700)!important;}
+  .leaflet-control-zoom a:hover{background:var(--rock-700)!important;}
+  .leaflet-popup-content-wrapper{background:var(--rock-900);color:var(--text);border:1px solid var(--rock-700);border-radius:2px;}
+  .leaflet-popup-tip{background:var(--rock-900);border:1px solid var(--rock-700);}
+  .leaflet-popup-content{margin:14px 16px;font-family:'Inter',sans-serif;}
+
+  header{
+    position:absolute;top:0;left:0;right:0;z-index:1000;
+    padding:18px 22px 14px;
+    background:linear-gradient(180deg, rgba(12,11,10,0.92) 0%, rgba(12,11,10,0.55) 70%, rgba(12,11,10,0) 100%);
+    pointer-events:none;
+  }
+  header .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;
+    color:var(--amber);text-transform:uppercase;
+  }
+  header h1{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;
+    letter-spacing:0.01em;margin:2px 0 2px;color:var(--text);
+    text-shadow:0 2px 12px rgba(0,0,0,0.6);
+  }
+  header p{margin:0;font-size:13px;color:var(--text-dim);max-width:480px;}
+
+  #panel{
+    position:absolute;top:0;right:0;bottom:0;width:340px;z-index:1000;
+    background:var(--rock-900);border-left:1px solid var(--rock-700);
+    display:flex;flex-direction:column;
+    transform:translateX(0);transition:transform .25s ease;
+  }
+  #panel.collapsed{transform:translateX(100%);}
+  #panel-toggle{
+    position:absolute;top:18px;right:340px;z-index:1001;
+    background:var(--rock-800);border:1px solid var(--rock-700);color:var(--limestone);
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;
+    padding:8px 10px;cursor:pointer;transition:right .25s ease;
+  }
+  #panel-toggle.collapsed{right:0;}
+  #panel-toggle:hover{background:var(--rock-700);}
+
+  #panel-header{padding:70px 18px 12px;border-bottom:1px solid var(--rock-800);}
+  #panel-header .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--amber);text-transform:uppercase;}
+  #panel-header h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;margin:4px 0 8px;font-weight:600;}
+
+  #layer-controls{padding:12px 18px;border-bottom:1px solid var(--rock-800);}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12.5px;}
+  .toggle-row:last-child{margin-bottom:0;}
+  .switch{position:relative;width:34px;height:18px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--rock-700);cursor:pointer;transition:.2s;border-radius:2px;}
+  .slider:before{content:"";position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--limestone-dim);transition:.2s;}
+  input:checked + .slider{background:var(--amber-dim);}
+  input:checked + .slider:before{transform:translateX(16px);background:var(--amber);}
+
+  #site-list{flex:1;overflow-y:auto;padding:8px 0;}
+  .site-item{
+    padding:12px 18px;border-bottom:1px solid var(--rock-800);cursor:pointer;
+    transition:background .15s;
+  }
+  .site-item:hover{background:var(--rock-800);}
+  .site-item .name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--text);}
+  .site-item .meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-dim);margin-top:3px;letter-spacing:.02em;}
+  .badge{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;
+    padding:2px 6px;margin-top:6px;text-transform:uppercase;border:1px solid;
+  }
+  .badge.verified{color:var(--amber);border-color:var(--amber-dim);}
+  .badge.approximate{color:var(--teal);border-color:#245560;}
+  .badge.historical{color:var(--danger);border-color:#6b2e1a;}
+
+  #legend{
+    padding:14px 18px;border-top:1px solid var(--rock-800);font-size:11px;color:var(--text-dim);
+  }
+  #legend .row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  #legend .swatch{width:11px;height:11px;flex-shrink:0;}
+
+  #source-note{
+    padding:12px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);
+    border-top:1px solid var(--rock-800);line-height:1.6;
+  }
+  #source-note a{color:var(--teal);}
+
+  .popup-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--amber);margin-bottom:4px;}
+  .popup-row{font-size:12px;margin:3px 0;color:var(--text-dim);}
+  .popup-row b{color:var(--text);font-weight:500;}
+  .popup-notes{font-size:12px;margin-top:8px;line-height:1.5;color:var(--text);}
+  .popup-source{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .popup-source a{color:var(--teal);}
+
+  @media (max-width: 720px){
+    #panel{width:88vw;}
+    #panel-toggle{right:88vw;}
+    header h1{font-size:24px;}
+    header p{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<header>
+  <div class="eyebrow">Room &amp; Pillar / Bethany Falls Limestone</div>
+  <h1>KC Underground</h1>
+  <p>Known and documented limestone mine complexes beneath the Kansas City metro, plotted over the modern street grid.</p>
+</header>
+
+<button id="panel-toggle">SITES ▸</button>
+<div id="panel">
+  <div id="panel-header">
+    <div class="label">Underground Sites</div>
+    <h2>Mapped Complexes</h2>
+  </div>
+
+  <div id="layer-controls">
+    <div class="toggle-row">
+      <span>Mine overlay</span>
+      <label class="switch"><input type="checkbox" id="toggle-mines" checked><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Missouri River</span>
+      <label class="switch"><input type="checkbox" id="toggle-river" checked><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Satellite basemap</span>
+      <label class="switch"><input type="checkbox" id="toggle-sat"><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div id="site-list"></div>
+
+  <div id="legend">
+    <div class="row"><span class="swatch" style="background:var(--amber);"></span> Verified location / documented extent</div>
+    <div class="row"><span class="swatch" style="background:var(--teal);"></span> Approximate — general vicinity only</div>
+    <div class="row"><span class="swatch" style="background:var(--danger);"></span> Historical record, site not precisely georeferenced</div>
+  </div>
+
+  <div id="source-note">
+    Polygon shapes are illustrative unless noted otherwise — this is not a substitute for surveyed mine maps.
+    Real GIS layers: <a href="https://hub.kansasgis.org/datasets/KU::quarries-and-mines" target="_blank">Kansas Geoportal quarries &amp; mines</a>,
+    Missouri DNR abandoned mine records, MSHA. See README for how to wire them in.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const map = L.map('map', {
+  center: [39.10, -94.55],
+  zoom: 11,
+  zoomControl: true,
+  attributionControl: true
+});
+
+const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+const satBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri',
+  maxZoom: 19
+});
+
+// Missouri River (rough polyline through the metro, illustrative)
+const riverLine = L.polyline([
+  [39.235, -94.72],[39.198,-94.66],[39.155,-94.60],[39.125,-94.575],
+  [39.108,-94.585],[39.095,-94.565],[39.095,-94.51],[39.11,-94.45],[39.13,-94.38]
+], {color:'#3a7d8c', weight:3, opacity:0.55, dashArray:'2,6'}).addTo(map);
+
+let minesLayer;
+const siteListEl = document.getElementById('site-list');
+
+function confidenceClass(c){
+  if(c.startsWith('verified')) return 'verified';
+  if(c.startsWith('historical')) return 'historical';
+  return 'approximate';
+}
+function confidenceColor(c){
+  if(c.startsWith('verified')) return '#f0a83c';
+  if(c.startsWith('historical')) return '#c1552f';
+  return '#3a7d8c';
+}
+
+fetch('data/mines.geojson')
+  .then(r => r.json())
+  .then(data => {
+    minesLayer = L.geoJSON(data, {
+      style: feature => ({
+        color: confidenceColor(feature.properties.confidence),
+        weight: 1.5,
+        fillColor: confidenceColor(feature.properties.confidence),
+        fillOpacity: 0.18,
+        dashArray: feature.properties.confidence.startsWith('verified') ? null : '4,4'
+      }),
+      pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+        radius: 7,
+        color: confidenceColor(feature.properties.confidence),
+        fillColor: confidenceColor(feature.properties.confidence),
+        fillOpacity: 0.85,
+        weight: 1.5
+      }),
+      onEachFeature: (feature, layer) => {
+        const p = feature.properties;
+        const html = `
+          <div class="popup-name">${p.name}</div>
+          ${p.operator ? `<div class="popup-row"><b>Operator:</b> ${p.operator}</div>` : ''}
+          ${p.formation ? `<div class="popup-row"><b>Formation:</b> ${p.formation}</div>` : ''}
+          ${p.depth_ft ? `<div class="popup-row"><b>Depth:</b> ~${p.depth_ft} ft below surface</div>` : ''}
+          ${p.size_sqft ? `<div class="popup-row"><b>Size:</b> ${p.size_sqft.toLocaleString()} sq ft</div>` : ''}
+          ${p.status ? `<div class="popup-row"><b>Status:</b> ${p.status}</div>` : ''}
+          <div class="popup-notes">${p.notes}</div>
+          ${p.source ? `<div class="popup-source"><a href="${p.source}" target="_blank">source ↗</a></div>` : ''}
+        `;
+        layer.bindPopup(html);
+      }
+    }).addTo(map);
+
+    data.features.forEach(f => {
+      const p = f.properties;
+      const div = document.createElement('div');
+      div.className = 'site-item';
+      div.innerHTML = `
+        <div class="name">${p.name}</div>
+        <div class="meta">${p.formation || 'unspecified formation'}${p.depth_ft ? ' · ~'+p.depth_ft+' ft deep' : ''}</div>
+        <span class="badge ${confidenceClass(p.confidence)}">${p.confidence.split(' ')[0].replace('-', ' ')}</span>
+      `;
+      div.addEventListener('click', () => {
+        let center;
+        if(f.geometry.type === 'Point'){
+          center = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+        } else {
+          const coords = f.geometry.coordinates[0];
+          const lats = coords.map(c=>c[1]), lngs = coords.map(c=>c[0]);
+          center = [(Math.min(...lats)+Math.max(...lats))/2, (Math.min(...lngs)+Math.max(...lngs))/2];
+        }
+        map.flyTo(center, 14, {duration: 0.8});
+        minesLayer.eachLayer(l => {
+          if(l.feature.properties.name === p.name){ l.openPopup(); }
+        });
+      });
+      siteListEl.appendChild(div);
+    });
+  })
+  .catch(err => {
+    siteListEl.innerHTML = `<div style="padding:18px;color:var(--danger);font-family:'JetBrains Mono',monospace;font-size:12px;">
+      Could not load data/mines.geojson — if opening this file directly (file://), run a local server instead:
+      <br><br><code>python3 -m http.server 8000</code><br>then open localhost:8000
+    </div>`;
+    console.error(err);
+  });
+
+// Controls
+document.getElementById('toggle-mines').addEventListener('change', e => {
+  if(!minesLayer) return;
+  if(e.target.checked) minesLayer.addTo(map); else map.removeLayer(minesLayer);
+});
+document.getElementById('toggle-river').addEventListener('change', e => {
+  if(e.target.checked) riverLine.addTo(map); else map.removeLayer(riverLine);
+});
+document.getElementById('toggle-sat').addEventListener('change', e => {
+  if(e.target.checked){ map.removeLayer(darkBase); satBase.addTo(map); }
+  else { map.removeLayer(satBase); darkBase.addTo(map); }
+});
+
+const panel = document.getElementById('panel');
+const panelToggle = document.getElementById('panel-toggle');
+panelToggle.addEventListener('click', () => {
+  panel.classList.toggle('collapsed');
+  panelToggle.classList.toggle('collapsed');
+  panelToggle.textContent = panel.classList.contains('collapsed') ? '◂ SITES' : 'SITES ▸';
+});
+</script>
+</body>
+</html>
